@@ -1,0 +1,48 @@
+import requests
+import pandas as pd
+from bs4 import BeautifulSoup
+
+# Website URL
+url = "https://books.toscrape.com/"
+
+# Send request to website
+response = requests.get(url, timeout=15)
+
+# Check website response
+if response.status_code == 200:
+    print("Website connected successfully!")
+
+    # Read HTML content
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    # Find all book containers
+    books = soup.find_all("article", class_="product_pod")
+
+    # Store extracted data
+    data = []
+
+    for book in books:
+        title = book.h3.a["title"]
+        price = book.find("p", class_="price_color").text
+        availability = book.find(
+            "p", class_="instock availability"
+        ).get_text(strip=True)
+
+        data.append({
+            "Title": title,
+            "Price": price,
+            "Availability": availability
+        })
+
+    # Create dataset
+    df = pd.DataFrame(data)
+
+    # Save dataset
+    df.to_csv("books_dataset.csv", index=False)
+
+    print(df.head())
+    print("\nTotal books scraped:", len(df))
+    print("Dataset saved as books_dataset.csv")
+
+else:
+    print("Failed to connect:", response.status_code)
